@@ -1,0 +1,4 @@
+{{- $nerdFont := promptBoolOnce . "nerdFont" "Is a Nerd Font your terminal font (y/n)" (eq .chezmoi.os "darwin") -}}
+
+[data]
+    nerdFont = {{ $nerdFont }}

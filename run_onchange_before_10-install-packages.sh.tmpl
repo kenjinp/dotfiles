@@ -1,0 +1,89 @@
+#!/bin/bash
+# Installs the tools these dotfiles expect. Runs before files are applied, and again
+# whenever this script changes. Every step skips work that is already done.
+set -euo pipefail
+
+have() { command -v "$1" >/dev/null 2>&1; }
+log() { printf '\033[1;34m[dotfiles]\033[0m %s\n' "$*"; }
+
+{{ if eq .chezmoi.os "darwin" -}}
+# ── macOS ──────────────────────────────────────────────────────────────────
+if ! have brew; then
+  log "Installing Homebrew"
+  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+log "Installing Homebrew packages"
+brew bundle --no-upgrade --file=- <<'EOF'
+brew "git"
+brew "neovim"
+brew "tmux"
+brew "ripgrep"
+brew "fd"
+brew "node"
+cask "font-jetbrains-mono-nerd-font"
+EOF
+
+{{ else if eq .chezmoi.os "linux" -}}
+# ── Linux / WSL (apt) ──────────────────────────────────────────────────────
+missing=()
+for pair in zsh:zsh tmux:tmux git:git curl:curl unzip:unzip make:make gcc:build-essential rg:ripgrep; do
+  have "${pair%%:*}" || missing+=("${pair#*:}")
+done
+if ((${#missing[@]})); then
+  log "Installing apt packages: ${missing[*]}"
+  sudo apt-get update
+  sudo apt-get install -y "${missing[@]}"
+fi
+
+# Neovim 0.11+ (distro packages are usually too old). neovim-releases builds
+# run on older glibc such as Ubuntu 20.04.
+nvim_ok() {
+  local v
+  v=$("$1" --version 2>/dev/null | head -n1 | sed -n 's/^NVIM v\([0-9]*\)\.\([0-9]*\).*/\1 \2/p')
+  [[ -n $v ]] && read -r major minor <<<"$v" && ((major > 0 || minor >= 11))
+}
+if ! nvim_ok "$HOME/.local/bin/nvim" && ! nvim_ok nvim; then
+  case "$(uname -m)" in
+    x86_64) url=https://github.com/neovim/neovim-releases/releases/latest/download/nvim-linux-x86_64.tar.gz; dir=nvim-linux-x86_64 ;;
+    aarch64) url=https://github.com/neovim/neovim/releases/latest/download/nvim-linux-arm64.tar.gz; dir=nvim-linux-arm64 ;;
+    *) echo "Unsupported architecture for Neovim: $(uname -m)" >&2; exit 1 ;;
+  esac
+  log "Installing Neovim into ~/.local/opt/$dir"
+  mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
+  rm -rf "${HOME:?}/.local/opt/$dir"
+  curl -fsSL "$url" | tar xz -C "$HOME/.local/opt"
+  ln -sfn "$HOME/.local/opt/$dir/bin/nvim" "$HOME/.local/bin/nvim"
+fi
+
+# Node.js for the TypeScript/ESLint language servers, via nvm.
+export NVM_DIR="$HOME/.nvm"
+if ! have node; then
+  if [[ ! -s $NVM_DIR/nvm.sh ]]; then
+    log "Installing nvm"
+    PROFILE=/dev/null bash -c "$(curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh)"
+  fi
+  # shellcheck disable=SC1091
+  set +u  # nvm is not compatible with `set -u`
+  source "$NVM_DIR/nvm.sh"
+  log "Installing Node.js LTS"
+  nvm install --lts
+  set -u
+fi
+
+# Make zsh the login shell.
+zsh_path=$(command -v zsh)
+case "$(getent passwd "$USER" | cut -d: -f7)" in
+  */zsh) ;;
+  *)
+    grep -qx "$zsh_path" /etc/shells || echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+    log "Changing login shell to $zsh_path"
+    sudo chsh -s "$zsh_path" "$USER"
+    ;;
+esac
+{{ end -}}

@@ -1,0 +1,54 @@
+# ~/.zshrc - managed by chezmoi (edit with `chezmoi edit --apply ~/.zshrc`).
+# Machine-only settings and secrets go in ~/.zshrc.local, which is not tracked.
+
+# Homebrew (macOS), before oh-my-zsh so plugins see brew binaries.
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+# ── oh-my-zsh ──────────────────────────────────────────────────────────────
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+plugins=(git zsh-autosuggestions)
+
+# Suggest as you type: history first, then the completion engine (file paths, commands).
+# Right arrow or End accepts the whole suggestion; Ctrl-Right / Alt-f accepts one word.
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#565f89"
+
+source "$ZSH/oh-my-zsh.sh"
+
+# ── PATH: tool directories, added only when installed ─────────────────────
+# Order matters: later prepends win, so ~/.local/bin, deno and pnpm beat nvm's node bin.
+typeset -U path   # drop duplicates when shells nest (tmux, herdr)
+
+[[ -d $HOME/.fly ]] && export FLYCTL_INSTALL="$HOME/.fly"
+[[ -d $HOME/.fly/bin ]] && path=("$HOME/.fly/bin" $path)
+
+export NVM_DIR="$HOME/.nvm"
+[[ -s $NVM_DIR/nvm.sh ]] && source "$NVM_DIR/nvm.sh"
+[[ -s $NVM_DIR/bash_completion ]] && source "$NVM_DIR/bash_completion"
+
+if [[ $OSTYPE == darwin* ]]; then
+  export PNPM_HOME="$HOME/Library/pnpm"
+else
+  export PNPM_HOME="$HOME/.local/share/pnpm"
+fi
+[[ -d $HOME/.deno ]] && export DENO_INSTALL="$HOME/.deno"
+for dir in "$PNPM_HOME" "$HOME/.deno/bin" "$HOME/.local/bin"; do
+  [[ -d $dir ]] && path=("$dir" $path)
+done
+for dir in "$HOME/.pulumi/bin" "$HOME/go/bin"; do
+  [[ -d $dir ]] && path+=("$dir")
+done
+
+# WSL: open links in Windows Chrome.
+if [[ -n $WSL_DISTRO_NAME ]]; then
+  export BROWSER="/mnt/c/Program\ Files/Google/Chrome/Application/chrome.exe"
+fi
+
+if [[ -f $HOME/.zshrc.local ]]; then
+  source "$HOME/.zshrc.local"
+fi

@@ -1,0 +1,20 @@
+#!/bin/bash
+# Installs Neovim plugins at the versions pinned in lazy-lock.json, plus the
+# highlighting parsers and language servers. Reruns whenever the lock file changes.
+# lazy-lock.json hash: {{ include "nvim-lazy-lock.json" | sha256sum }}
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$PATH"
+for brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+  [[ -x $brew ]] && eval "$("$brew" shellenv)" && break
+done
+# nvm is not compatible with `set -u`.
+# shellcheck disable=SC1091
+[[ -s $HOME/.nvm/nvm.sh ]] && { set +u; source "$HOME/.nvm/nvm.sh"; set -u; }
+
+printf '\033[1;34m[dotfiles]\033[0m %s\n' "Installing Neovim plugins, parsers and language servers"
+nvim --headless "+Lazy! restore" +qa
+nvim --headless "+TSUpdateSync" +qa
+nvim --headless \
+  -c "MasonInstall typescript-language-server eslint-lsp json-lsp css-lsp html-lsp lua-language-server" \
+  -c qa

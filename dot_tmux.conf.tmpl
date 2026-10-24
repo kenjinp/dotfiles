@@ -1,0 +1,76 @@
+# ~/.tmux.conf - managed by chezmoi. Written for tmux 3.0a+ (XDG ~/.config/tmux needs 3.1+).
+
+# --- Prefix: Ctrl-s (press Ctrl-s twice to send a literal Ctrl-s to the app) ---
+unbind C-b
+set -g prefix C-s
+bind C-s send-prefix
+
+# --- Terminal / colors ---
+{{- if eq .chezmoi.os "darwin" }}
+set -g default-terminal "screen-256color"   # macOS terminfo lacks tmux-256color
+{{- else }}
+set -g default-terminal "tmux-256color"
+{{- end }}
+set -ga terminal-overrides ",*256col*:Tc"
+set -sg escape-time 10          # no Esc lag in Neovim
+set -g focus-events on          # lets Neovim autoread on focus
+set -g history-limit 50000
+set -g mouse on
+
+# --- Numbering ---
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+
+# --- Reload ---
+bind r source-file ~/.tmux.conf \; display-message "tmux.conf reloaded"
+
+# --- Splits / windows open in the current directory ---
+bind | split-window -h -c "#{pane_current_path}"
+bind - split-window -v -c "#{pane_current_path}"
+bind c new-window -c "#{pane_current_path}"
+unbind '"'
+unbind %
+
+# --- Resize panes with prefix + H/J/K/L (repeatable) ---
+bind -r H resize-pane -L 5
+bind -r J resize-pane -D 5
+bind -r K resize-pane -U 5
+bind -r L resize-pane -R 5
+
+# Ctrl-h/j/k/l move between tmux panes AND Neovim splits (vim-tmux-navigator).
+# Ctrl-l is taken, so prefix + Ctrl-l clears the screen.
+bind C-l send-keys 'C-l'
+
+# --- Copy mode: vi keys (tmux-yank copies `y` to the Windows clipboard) ---
+setw -g mode-keys vi
+bind -T copy-mode-vi v send-keys -X begin-selection
+bind -T copy-mode-vi C-v send-keys -X rectangle-toggle
+
+# --- Status bar (plain, no Nerd Font needed) ---
+set -g status-position bottom
+set -g status-interval 5
+set -g status-style "bg=#1f2335,fg=#a9b1d6"
+set -g status-left-length 30
+set -g status-left "#[fg=#1f2335,bg=#7aa2f7,bold] #S #[default] "
+set -g status-right "#[fg=#7aa2f7]%Y-%m-%d %H:%M "
+setw -g window-status-format " #I:#W "
+setw -g window-status-current-format "#[fg=#1f2335,bg=#bb9af7,bold] #I:#W "
+set -g pane-border-style "fg=#3b4261"
+set -g pane-active-border-style "fg=#7aa2f7"
+set -g message-style "bg=#1f2335,fg=#7aa2f7"
+
+# --- Plugins (TPM): prefix + I installs, prefix + U updates ---
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-sensible'
+set -g @plugin 'tmux-plugins/tmux-yank'
+set -g @plugin 'tmux-plugins/tmux-resurrect'   # prefix + S save, prefix + R restore
+set -g @plugin 'christoomey/vim-tmux-navigator'
+
+set -g @resurrect-strategy-nvim 'session'
+
+set -g @resurrect-save 'S'      # default Ctrl-s would collide with the prefix
+set -g @resurrect-restore 'R'
+
+# Keep this last.
+run '~/.tmux/plugins/tpm/tpm'
