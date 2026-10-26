@@ -350,6 +350,16 @@ require("lazy").setup({
     },
   },
 
+  -- Start screen: a random Neovim logo from ascii.nvim (local plugin in plugins/)
+  {
+    dir = vim.fn.stdpath("config") .. "/plugins/ascii-splash.nvim",
+    name = "ascii-splash.nvim",
+    main = "ascii-splash",
+    lazy = false,
+    dependencies = { "MaximilianLloyd/ascii.nvim" },
+    opts = {},
+  },
+
   -- Statusline
   {
     "nvim-lualine/lualine.nvim",

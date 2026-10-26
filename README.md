@@ -42,6 +42,7 @@ Open a new terminal afterwards. On macOS, set the terminal font to "JetBrainsMon
 | `dot_zshrc` | `~/.zshrc` (machine-only settings go in untracked `~/.zshrc.local`) |
 | `dot_tmux.conf.tmpl` | `~/.tmux.conf` (prefix `Ctrl-s`) |
 | `dot_config/nvim/` | `~/.config/nvim/` (`lua/machine.lua` is rendered from `[data]` in `~/.config/chezmoi/chezmoi.toml`) |
+| `dot_config/nvim/plugins/ascii-splash.nvim/` | local plugin: random Neovim logo from ascii.nvim on the start screen |
 | `nvim-lazy-lock.json` | symlinked as `~/.config/nvim/lazy-lock.json` |
 | `dot_config/herdr/config.toml` | `~/.config/herdr/config.toml` (prefix `Ctrl-s`) |
 | `.chezmoiexternal.toml` | oh-my-zsh, zsh-autosuggestions, TPM and tmux plugins |
