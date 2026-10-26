@@ -87,6 +87,10 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local js_fts = { "javascript", "javascriptreact", "typescript", "typescriptreact" }
+local ts_parsers = {
+  "javascript", "typescript", "tsx", "json", "html", "css", "lua", "luadoc",
+  "vim", "vimdoc", "query", "markdown", "markdown_inline", "bash", "regex",
+}
 
 require("lazy").setup({
   -- Colorscheme
@@ -155,18 +159,53 @@ require("lazy").setup({
     end,
   },
 
-  -- Treesitter (syntax highlighting / indent). `master` compiles parsers with gcc
-  -- and needs no tree-sitter CLI, which has no build for this glibc.
-  {
+  -- Treesitter (syntax highlighting / indent). Neovim 0.12+ needs the `main`
+  -- rewrite (`master` is frozen and unsupported there); `main` builds parsers
+  -- with the tree-sitter CLI (`brew install tree-sitter-cli`). Older Neovim keeps
+  -- `master`, which compiles parsers with gcc and needs no CLI (the CLI has no
+  -- build for older glibc).
+  vim.fn.has("nvim-0.12") == 1 and {
+    "nvim-treesitter/nvim-treesitter",
+    branch = "main",
+    lazy = false,
+    build = ":TSUpdate",
+    config = function()
+      local ts = require("nvim-treesitter")
+      ts.install(ts_parsers)
+
+      local function start(buf, lang)
+        if not vim.api.nvim_buf_is_valid(buf) or not pcall(vim.treesitter.start, buf, lang) then
+          return
+        end
+        vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+      end
+
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("treesitter_start", { clear = true }),
+        callback = function(args)
+          local buf, lang = args.buf, vim.treesitter.language.get_lang(args.match)
+          if not lang then
+            return
+          end
+          if vim.tbl_contains(ts.get_installed(), lang) then
+            start(buf, lang)
+          elseif vim.tbl_contains(ts.get_available(), lang) then -- auto_install
+            ts.install(lang):await(vim.schedule_wrap(function(err)
+              if not err then
+                start(buf, lang)
+              end
+            end))
+          end
+        end,
+      })
+    end,
+  } or {
     "nvim-treesitter/nvim-treesitter",
     branch = "master",
     build = ":TSUpdate",
     main = "nvim-treesitter.configs",
     opts = {
-      ensure_installed = {
-        "javascript", "typescript", "tsx", "json", "html", "css", "lua", "luadoc",
-        "vim", "vimdoc", "query", "markdown", "markdown_inline", "bash", "regex",
-      },
+      ensure_installed = ts_parsers,
       auto_install = true,
       highlight = { enable = true },
       indent = { enable = true },
