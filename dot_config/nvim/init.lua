@@ -325,6 +325,31 @@ require("lazy").setup({
     keys = { { "-", "<cmd>Oil<CR>", desc = "Open parent directory" } },
   },
 
+  -- File tree sidebar on the left. oil.nvim stays the directory handler (`-`, `nvim .`).
+  {
+    "nvim-tree/nvim-tree.lua",
+    dependencies = { { "nvim-tree/nvim-web-devicons", enabled = vim.g.have_nerd_font } },
+    cmd = { "NvimTreeToggle", "NvimTreeFindFileToggle" },
+    keys = { { "<leader>t", "<cmd>NvimTreeFindFileToggle<CR>", desc = "Toggle file tree" } },
+    opts = {
+      hijack_netrw = false,
+      hijack_directories = { enable = false },
+      view = { side = "left", width = 32 },
+      filters = { dotfiles = false, custom = { "^.git$" } },
+      renderer = {
+        add_trailing = not vim.g.have_nerd_font,
+        icons = {
+          show = {
+            file = vim.g.have_nerd_font,
+            folder = vim.g.have_nerd_font,
+            folder_arrow = vim.g.have_nerd_font,
+            git = vim.g.have_nerd_font,
+          },
+        },
+      },
+    },
+  },
+
   -- Statusline
   {
     "nvim-lualine/lualine.nvim",
