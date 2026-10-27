@@ -55,6 +55,9 @@ map("n", "<leader>w", "<cmd>write<CR>", { desc = "Write file" })
 map("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Diagnostics to loclist" })
 map("n", "<leader>e", vim.diagnostic.open_float, { desc = "Show line diagnostics" })
 map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+map("n", "<leader>of", function() require("omp").ask_file() end, { desc = "omp: ask about current file" })
+map("n", "<leader>od", function() require("omp").ask_dir() end, { desc = "omp: ask in project root" })
+map("n", "<leader>oi", function() require("omp").interactive() end, { desc = "omp: interactive session" })
 
 vim.diagnostic.config({
   severity_sort = true,
