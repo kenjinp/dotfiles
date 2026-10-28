@@ -87,3 +87,17 @@ case "$(getent passwd "$USER" | cut -d: -f7)" in
     ;;
 esac
 {{ end -}}
+
+# ── herdr and omp (all platforms) ──────────────────────────────────────────
+# Official upstream installers; both verify the download's SHA-256 and install
+# into ~/.local/bin, which ~/.zshrc puts on PATH.
+export PATH="$HOME/.local/bin:$PATH"
+if ! have herdr; then
+  log "Installing herdr into ~/.local/bin"
+  curl -fsSL https://herdr.dev/install.sh | HERDR_INSTALL_DIR="$HOME/.local/bin" sh
+fi
+if ! have omp; then
+  # --binary: always the prebuilt binary, even if bun is installed.
+  log "Installing omp into ~/.local/bin"
+  curl -fsSL https://omp.sh/install | PI_INSTALL_DIR="$HOME/.local/bin" sh -s -- --binary
+fi

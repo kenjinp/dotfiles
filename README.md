@@ -15,6 +15,8 @@ This installs chezmoi into `~/.local/bin`, clones this repo, asks one question
 1. installs packages (`run_onchange_before_10-install-packages.sh.tmpl`)
    - macOS: Homebrew, neovim, tmux, ripgrep, fd, node, JetBrainsMono Nerd Font
    - Linux: apt packages, Neovim 0.11+ in `~/.local/opt`, Node via nvm, zsh as login shell
+   - both: [herdr](https://herdr.dev) and [omp](https://omp.sh) into `~/.local/bin`, via their
+     official install scripts (log in to an omp provider yourself afterwards)
 2. writes the config files and clones oh-my-zsh and the tmux plugins (`.chezmoiexternal.toml`)
 3. installs Neovim plugins at the versions in `lazy-lock.json`, highlighting parsers and
    language servers (`run_onchange_after_20-nvim-plugins.sh.tmpl`)
